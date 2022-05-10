@@ -9,7 +9,7 @@ const connection = mysql.createConnection({
   host: HOST,
   user: USER,
   password: PASSWORD,
-  database: DATABASE,
+  database: DATABASE
 });
  
 connection.connect();
