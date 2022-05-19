@@ -8,9 +8,9 @@ const categoriesQuery = () => {
 
 const productByIdQuery = (id) => {
     return `
-    SELECT *
-    FROM products
-    WHERE products.id_product =${id}
+        SELECT *
+        FROM products
+        WHERE products.id_product =${id}
     `;
 }
 
@@ -24,9 +24,27 @@ const productOptionsByIdQuery = (id) => {
 
 }
 
+const productsByCategoryIdQuery = (id) => {
+    return `
+        SELECT *
+        FROM products
+        WHERE products.id_category =${id}
+`
+}
+
+const productsByCategoryTypeQuery = (id) => {
+    return `
+        SELECT *
+        FROM categories
+        WHERE categories.type =${id}
+`
+}
+
 module.exports = {
     productsQuery,
     categoriesQuery,
     productByIdQuery,
-    productOptionsByIdQuery
+    productOptionsByIdQuery,
+    productsByCategoryIdQuery,
+    productsByCategoryTypeQuery
 }
