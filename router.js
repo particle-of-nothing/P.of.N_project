@@ -1,5 +1,5 @@
 const { getCategories } = require("./repositories/categories.repository");
-const { getProducts, getProductById, getProductsByCategoryId } = require("./repositories/products.repository");
+const { getProducts, getProductById, getProductsByCategoryId, getProductsByCategoryType } = require("./repositories/products.repository");
 
 const routes = [
     (request, response) => {
