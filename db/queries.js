@@ -40,11 +40,20 @@ const productsByCategoryTypeQuery = (id) => {
 `
 }
 
+const searchProductsQuery = (pattern) => {
+    return `
+        SELECT *
+        FROM products
+        WHERE products.product_name LIKE '%${pattern}%'
+`
+}
+
 module.exports = {
     productsQuery,
     categoriesQuery,
     productByIdQuery,
     productOptionsByIdQuery,
     productsByCategoryIdQuery,
-    productsByCategoryTypeQuery
+    productsByCategoryTypeQuery,
+    searchProductsQuery,
 }

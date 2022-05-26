@@ -1,13 +1,10 @@
 const http = require('http');
+const { PROTOCOL, HOST, PORT } = require('./consts');
 
 const router = require('./router');
-
-const HOST = 'localhost';
-const PORT = '8000';
-const PROTOCOL = 'http';
 
 const server = http.createServer(router);
 
 server.listen(PORT, () => {
-    console.log(`I\m listening on ${PROTOCOL}://${HOST}:${PORT}`);
+    console.log(`I\m listening on ${PROTOCOL}${HOST}:${PORT}`);
 });

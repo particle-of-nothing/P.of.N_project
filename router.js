@@ -1,5 +1,8 @@
+const { SEARCH_QUERY_PARAM_KEY, PROTOCOL, HOST, PORT } = require("./consts");
 const { getCategories } = require("./repositories/categories.repository");
 const { getProducts, getProductById, getProductsByCategoryId, getProductsByCategoryType } = require("./repositories/products.repository");
+const { search } = require("./repositories/search.repository");
+
 const setGeneralHeaders = (response) => {
     response.writeHead(
         200,
@@ -9,6 +12,7 @@ const setGeneralHeaders = (response) => {
         }
     );
 };
+
 const readBody = (request, callback) => {
     let data = "";
 
@@ -20,10 +24,21 @@ const readBody = (request, callback) => {
         callback(data);
     });
 }
+
 const routes = [
     (request, response) => {
         if (request.method === 'OPTIONS') {
             response.end();
+            return true;
+        }
+    },
+    (request, response) => {
+        const match = request.url.match(/^\/search\?.*/i);
+        const url = new URL(`${PROTOCOL}${HOST}:${PORT}/${request.url}`);
+        const queryParams = new URLSearchParams(url.search);
+        const searchPattern = queryParams.get(SEARCH_QUERY_PARAM_KEY);
+        if (match != null && searchPattern && request.method === 'GET') {
+            search(searchPattern, result => response.end(JSON.stringify(result)));
             return true;
         }
     },
@@ -40,7 +55,7 @@ const routes = [
         }
     },
     (request, response) => {
-        const match = request.url.match(/^\/products\/(\d+)$/);
+        const match = request.url.match(/^\/products\/(\d+)$/i);
         if (match != null && match[1] && request.method === 'GET') {
             getProductById(match[1], result => response.end(JSON.stringify(result)));
             return true;
@@ -48,14 +63,14 @@ const routes = [
     },
     (request, response) => {
         // Продукты по id категории
-        const match = request.url.match(/^\/products\?category=(\d+)$/);
+        const match = request.url.match(/^\/products\?category=(\d+)$/i);
         if (match != null && match[1] && request.method === 'GET') {
             getProductsByCategoryId(match[1], result => response.end(JSON.stringify(result)));
             return true;
         }
     },
     (request, response) => {
-        const match = request.url.match(/^\/category\?type=(\d+)$/);
+        const match = request.url.match(/^\/category\?type=(\d+)$/i);
         if (match != null && match[1] && request.method === 'GET') {
             getProductsByCategoryType(match[1], result => response.end(JSON.stringify(result)));
             return true;
