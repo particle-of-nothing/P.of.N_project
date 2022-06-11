@@ -16,7 +16,7 @@ const productByIdQuery = (id) => {
 
 const productOptionsByIdQuery = (id) => {
     return `
-        SELECT option_name, description, value
+        SELECT option_name, description, value, units
         FROM product_option
         JOIN options ON options.id_option = product_option.id_option
         WHERE product_option.id_product =${id}
