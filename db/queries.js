@@ -55,6 +55,13 @@ const createUserQuery = (login, password, role) => {
 `
 }
 
+const createProfileQuery = (userId) => {
+    return `
+        INSERT INTO profiles (id_user)
+        VALUES (${userId});
+`
+}
+
 const getUserByIdQuery = (id) => {
     return `
         SELECT id_user, login, role, password
@@ -83,4 +90,5 @@ module.exports = {
     createUserQuery,
     getUserByLoginQuery,
     getUserByIdQuery,
+    createProfileQuery,
 }

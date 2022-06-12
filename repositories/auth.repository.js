@@ -1,6 +1,6 @@
 const { ERROR_CODES, DEFAULT_SIGN_UP_ROLE } = require("../consts");
 const connection = require("../db/connection");
-const { createUserQuery, getUserByLoginQuery, getUserByIdQuery } = require("../db/queries");
+const { createUserQuery, getUserByLoginQuery, getUserByIdQuery, createProfileQuery } = require("../db/queries");
 const { ErrorDTO } = require("../models/error-dto/error-dto");
 const { User } = require("../models/user/user");
 const { generateToken } = require("../tools/jwt");
@@ -85,6 +85,17 @@ const createUser = (signUpData, callback) => {
                             callback(new ErrorDTO(500, ERROR_CODES.UNKNOWN_ERROR));
                             return;
                         };
+
+                        connection.query(
+                            createProfileQuery(result.insertId),
+                            (error, result) => {
+                                if (error) {
+                                    console.error(error);
+                                    callback(new ErrorDTO(500, ERROR_CODES.UNKNOWN_ERROR));
+                                    return;
+                                };
+                            }
+                        );
 
                         getUserById(result.insertId, (err, user) => {
                             if (err) {
