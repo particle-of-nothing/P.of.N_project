@@ -19,14 +19,14 @@ const generateToken = (userId, callback) => {
 }
 
 const verifyToken = (token, callback) => {
-    jwt.verify(token, PRIVATE_KEY, (err, result) => {
+    jwt.verify(token, PRIVATE_KEY, (err, payload) => {
         if (err) {
             console.error(err);
             callback(new ErrorDTO(500, ERROR_CODES.UNKNOWN_ERROR));
             return;
         }
         
-        callback(null, result);
+        callback(null, payload);
     });
 }
 

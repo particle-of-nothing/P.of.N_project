@@ -1,8 +1,10 @@
-const { SEARCH_QUERY_PARAM_KEY, PROTOCOL, HOST, PORT } = require("./consts");
+const { SEARCH_QUERY_PARAM_KEY, PROTOCOL, HOST, PORT, ERROR_CODES } = require("./consts");
 const { signUp, auth } = require("./repositories/auth.repository");
-const { getCategories } = require("./repositories/categories.repository");
-const { getProducts, getProductById, getProductsByCategoryId, getProductsByCategoryType } = require("./repositories/products.repository");
+const { getCategories, getCategoriesByType } = require("./repositories/categories.repository");
+const { createPacket, getPacketById, getPackets, renamePacket, addProductToPacket, deleteProductFormPacket } = require("./repositories/packet.repository");
+const { getProducts, getProductById, getProductsByCategoryId } = require("./repositories/products.repository");
 const { search } = require("./repositories/search.repository");
+const { verifyToken, generateToken } = require("./tools/jwt");
 const { readBody } = require("./tools/read-body");
 
 const setGeneralHeaders = (response) => {
@@ -14,6 +16,38 @@ const setGeneralHeaders = (response) => {
         }
     );
 };
+
+const authRequest = (request, response, callback) => {
+    const authHeader = request.headers['authorization'];
+    if (!authHeader) {
+        response.writeHead(401);
+        response.end({ code: ERROR_CODES.NO_CREDENTIALS_PROVIDED_ERROR });
+        return;
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    verifyToken(token, (err, payload) => {
+        if (err) {
+            response.writeHead(err.status);
+            response.end(err.serialize());
+            return;
+        }
+
+        generateToken(payload.id, (err, newToken) => {
+            if (err) {
+                response.writeHead(err.status);
+                response.end(err.serialize());
+                return;
+            }
+
+            response.writeHead(200, { 'authorization': `Bearer ${newToken}` });
+
+            callback(payload);
+
+        });
+    });
+}
 
 const routes = [
     (request, response) => {
@@ -62,24 +96,14 @@ const routes = [
     (request, response) => {
         const match = request.url.match(/^\/category\?type=(\d+)$/i);
         if (match != null && match[1] && request.method === 'GET') {
-            getProductsByCategoryType(match[1], result => response.end(JSON.stringify(result)));
-            return true;
-        }
-    },
-    (request, response) => {
-        if (request.url === "/packets" && request.method === "POST") {
-            readBody(request, data => {
-                const parsed = JSON.parse(data)
-                response.end(JSON.stringify(parsed['кей']));
-            });
-
+            getCategoriesByType(match[1], result => response.end(JSON.stringify(result)));
             return true;
         }
     },
     (request, response) => {
         if (request.url === "/sign-up" && request.method === "POST") {
             readBody(request, signUpData => {
-                const {login, password} = JSON.parse(signUpData);
+                const { login, password } = JSON.parse(signUpData);
 
                 signUp(login, password, (err, result) => {
                     if (err) {
@@ -87,8 +111,8 @@ const routes = [
                         response.end(err.serialize());
                         return;
                     }
-                    
-                    response.writeHead(200, {'Authorization': `Bearer ${result.token}`});
+
+                    response.writeHead(200, { 'authorization': `Bearer ${result.token}` });
                     response.end(result.user.serialize());
                 });
             });
@@ -99,7 +123,7 @@ const routes = [
     (request, response) => {
         if (request.url === "/auth" && request.method === "POST") {
             readBody(request, authData => {
-                const {login, password} = JSON.parse(authData);
+                const { login, password } = JSON.parse(authData);
 
                 auth(login, password, (err, result) => {
                     if (err) {
@@ -108,9 +132,119 @@ const routes = [
                         return;
                     }
 
-                    response.writeHead(200, {'Authorization': `Bearer ${result.token}`});
+                    response.writeHead(200, { 'authorization': `Bearer ${result.token}` });
                     response.end(result.user.serialize());
                 });
+            });
+
+            return true;
+        }
+    },
+    (request, response) => {
+        const match = request.url.match(/^\/packets\/(\d+)$/i);
+        if (match != null && match[1] && request.method === 'GET') {
+            getPacketById(match[1], (err, packet) => {
+                if (err) {
+                    response.writeHead(err.status);
+                    response.end(err.serialize());
+                    return;
+                }
+
+                response.end(packet.serialize());
+            });
+            return true;
+        }
+    },
+    (request, response) => {
+        if (request.url === '/packets' && request.method === 'GET') {
+            getPackets((err, packets) => {
+                if (err) {
+                    response.writeHead(err.status);
+                    response.end(err.serialize());
+                    return;
+                }
+
+                response.end(JSON.stringify(packets))
+            });
+            return true;
+        }
+    },
+    (request, response) => {
+        if (request.url === "/packets" && request.method === "POST") {
+
+            authRequest(request, response, (tokenPayload) => {
+                createPacket(tokenPayload.id, (err, packet) => {
+                    if (err) {
+                        response.writeHead(err.status);
+                        response.end(err.serialize());
+                        return;
+                    }
+
+                    response.end(packet.serialize());
+                });
+            });
+
+            return true;
+        }
+    },
+    (request, response) => {
+        const match = request.url.match(/^\/packets\/(\d+)$/i);
+        if (match != null && match[1] && request.method === 'PATCH') {
+            authRequest(request, response, () => {
+                readBody(request, changes => {
+                    const parsedChanges = JSON.parse(changes);
+                    renamePacket(match[1], parsedChanges.name, (err, packet) => {
+                        if (err) {
+                            response.writeHead(err.status);
+                            response.end(err.serialize());
+                            return;
+                        }
+
+                        response.end(packet.serialize());
+                    });
+                })
+            });
+
+            return true;
+        }
+    },
+    (request, response) => {
+        const match = request.url.match(/^\/packets\/(\d+)\/products$/i);
+        if (match != null && match[1] && request.method === 'PATCH') {
+            authRequest(request, response, () => {
+                readBody(request, productIdObject => {
+                    const parsedProductIdObject = JSON.parse(productIdObject);
+                    addProductToPacket(match[1], parsedProductIdObject.id, (err, packet) => {
+                        if (err) {
+                            response.writeHead(err.status);
+                            response.end(err.serialize());
+                            return;
+                        }
+
+                        response.end(packet.serialize());
+                    });
+                })
+            });
+
+            return true;
+        }
+    },
+    (request, response) => {
+        const match = request.url.match(/^\/packets\/(\d+)\/products$/i);
+        if (match != null && match[1] && request.method === 'DELETE') {
+            authRequest(request, response, () => {
+                readBody(request, productIdObject => {
+                    const parsedProductIdObject = JSON.parse(productIdObject);
+                    deleteProductFormPacket(match[1], parsedProductIdObject.id, (err, packet) => {
+                        if (err) {
+                            response.writeHead(err.status);
+                            response.end(err.serialize());
+                            return;
+                        }
+
+                        response.end(packet.serialize());
+                    });
+                })
             });
 
             return true;

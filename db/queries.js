@@ -32,7 +32,16 @@ const productsByCategoryIdQuery = (id) => {
 `
 }
 
-const productsByCategoryTypeQuery = (id) => {
+const getProductsByPacketIdQuery = (id) => {
+    return `
+        SELECT products.id_product AS id_product, product_name, description, id_category, photo, quantity
+        FROM products
+        JOIN packets_products ON products.id_product = packets_products.id_product
+        WHERE packets_products.id_packet = ${id}
+`
+}
+
+const categoriesByTypeQuery = (id) => {
     return `
         SELECT *
         FROM categories
@@ -78,6 +87,74 @@ const getUserByLoginQuery = (login) => {
 `
 }
 
+const getPacketsQuery = () => {
+    return `
+        SELECT *
+        FROM packets
+`
+}
+
+const getPacketByIdQuery = (id) => {
+    return `
+        SELECT *
+        FROM packets
+        WHERE packets.id_packet = ${id}
+`
+}
+
+const createPacketQuery = (userId) => {
+    return `
+        INSERT INTO packets (id_user)
+        VALUES (${userId});
+`
+}
+
+const renamePacketQuery = (id, newName) => {
+    return `
+        UPDATE packets
+        SET name = '${newName}'
+        WHERE packets.id_packet = ${id};
+`
+}
+
+const findProductInPacketQuery = (packetId, productId) => {
+    return `
+        SELECT * FROM packets_products
+        WHERE
+            packets_products.id_packet = ${packetId}
+            AND
+            packets_products.id_product = ${productId};
+`
+}
+
+const addProductToPacketQuery = (packetId, productId) => {
+    return `
+        INSERT INTO packets_products (id_packet, id_product, quantity)
+        VALUES (${packetId}, ${productId}, 1);
+`
+}
+
+const updateProductQuantityInPacketQuery = (packetId, productId, quantity) => {
+    return `
+        UPDATE packets_products
+        SET quantity = '${quantity}'
+        WHERE
+            packets_products.id_packet = ${packetId}
+            AND
+            packets_products.id_product = ${productId};
+`
+}
+
+const deleteProductFromPacketQuery = (packetId, productId) => {
+    return `
+        DELETE FROM packets_products
+        WHERE
+            packets_products.id_packet = ${packetId}
+            AND
+            packets_products.id_product = ${productId};
+`
+}
+
 
 module.exports = {
     productsQuery,
@@ -85,10 +162,19 @@ module.exports = {
     productByIdQuery,
     productOptionsByIdQuery,
     productsByCategoryIdQuery,
-    productsByCategoryTypeQuery,
+    categoriesByTypeQuery,
     searchProductsQuery,
     createUserQuery,
     getUserByLoginQuery,
     getUserByIdQuery,
     createProfileQuery,
+    getProductsByPacketIdQuery,
+    getPacketByIdQuery,
+    createPacketQuery,
+    getPacketsQuery,
+    renamePacketQuery,
+    addProductToPacketQuery,
+    findProductInPacketQuery,
+    updateProductQuantityInPacketQuery,
+    deleteProductFromPacketQuery,
 }

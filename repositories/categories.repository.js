@@ -1,5 +1,8 @@
 const connection = require("../db/connection");
-const {categoriesQuery} = require("../db/queries")
+const {
+    categoriesQuery,
+    categoriesByTypeQuery
+} = require("../db/queries")
 
 const getCategories = (callback) => {
     connection.query(
@@ -11,6 +14,18 @@ const getCategories = (callback) => {
     )
 }
 
+const getCategoriesByType = (id, callback) => {
+    connection.query(
+        categoriesByTypeQuery(id),
+        (error, result) => {
+            if (error) throw error;
+            callback(result);
+        }
+    )
+}
+
+
 module.exports = {
-    getCategories
+    getCategories,
+    getCategoriesByType,
 };

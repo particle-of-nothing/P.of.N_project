@@ -1,11 +1,13 @@
+const { ERROR_CODES } = require("../consts");
 const connection = require("../db/connection");
 const {
     productsQuery,
     productOptionsByIdQuery,
     productByIdQuery,
     productsByCategoryIdQuery,
-    productsByCategoryTypeQuery,
-} = require("../db/queries")
+    getProductsByPacketIdQuery
+} = require("../db/queries");
+const { ErrorDTO } = require("../models/error-dto/error-dto");
 
 const getProducts = (callback) => {
     connection.query(
@@ -27,7 +29,7 @@ const getProductById = (id, callback) => {
 
                 (error, options) => {
                     if (error) throw error;
-                    
+
                     const enrichedProduct = {
                         ...product[0],
                         options
@@ -49,20 +51,24 @@ const getProductsByCategoryId = (id, callback) => {
     )
 }
 
-const getProductsByCategoryType = (id, callback) => {
+const getProductsByPacketId = (id, callback) => {
     connection.query(
-        productsByCategoryTypeQuery(id),
-        (error, result) => {
-            if (error) throw error;
-            callback(result);
+        getProductsByPacketIdQuery(id),
+        (error, products) => {
+            if (error) {
+                console.error(error);
+                callback(new ErrorDTO(500, ERROR_CODES.CAN_NOT_LOAD_PRODUCTS_OF_PACKET_ERROR))
+                return;
+            };
+
+            callback(null, products);
         }
     )
 }
-
 
 module.exports = {
     getProducts,
     getProductById,
     getProductsByCategoryId,
-    getProductsByCategoryType,
+    getProductsByPacketId,
 };
