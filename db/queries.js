@@ -48,6 +48,30 @@ const searchProductsQuery = (pattern) => {
 `
 }
 
+const createUserQuery = (login, password, role) => {
+    return `
+        INSERT INTO users (login, password, role)
+        VALUES ('${login}', '${password}', ${role});
+`
+}
+
+const getUserByIdQuery = (id) => {
+    return `
+        SELECT id_user, login, role, password
+        FROM users
+        WHERE id_user = ${id}
+`
+}
+
+const getUserByLoginQuery = (login) => {
+    return `
+        SELECT id_user, login, role, password
+        FROM users
+        WHERE login = '${login}'
+`
+}
+
+
 module.exports = {
     productsQuery,
     categoriesQuery,
@@ -56,4 +80,7 @@ module.exports = {
     productsByCategoryIdQuery,
     productsByCategoryTypeQuery,
     searchProductsQuery,
+    createUserQuery,
+    getUserByLoginQuery,
+    getUserByIdQuery,
 }

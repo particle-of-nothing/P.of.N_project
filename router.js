@@ -1,7 +1,9 @@
 const { SEARCH_QUERY_PARAM_KEY, PROTOCOL, HOST, PORT } = require("./consts");
+const { signUp, auth } = require("./repositories/auth.repository");
 const { getCategories } = require("./repositories/categories.repository");
 const { getProducts, getProductById, getProductsByCategoryId, getProductsByCategoryType } = require("./repositories/products.repository");
 const { search } = require("./repositories/search.repository");
+const { readBody } = require("./tools/read-body");
 
 const setGeneralHeaders = (response) => {
     response.writeHead(
@@ -12,18 +14,6 @@ const setGeneralHeaders = (response) => {
         }
     );
 };
-
-const readBody = (request, callback) => {
-    let data = "";
-
-    request.on("data", chunk => {
-        data += chunk;
-    });
-
-    request.on("end", () => {
-        callback(data);
-    });
-}
 
 const routes = [
     (request, response) => {
@@ -86,11 +76,51 @@ const routes = [
             return true;
         }
     },
+    (request, response) => {
+        if (request.url === "/sign-up" && request.method === "POST") {
+            readBody(request, signUpData => {
+                const {login, password} = JSON.parse(signUpData);
+
+                signUp(login, password, (err, result) => {
+                    if (err) {
+                        response.writeHead(err.status);
+                        response.end(err.serialize());
+                        return;
+                    }
+                    
+                    response.writeHead(200, {'Authorization': `Bearer ${result.token}`});
+                    response.end(result.user.serialize());
+                });
+            });
+
+            return true;
+        }
+    },
+    (request, response) => {
+        if (request.url === "/auth" && request.method === "POST") {
+            readBody(request, authData => {
+                const {login, password} = JSON.parse(authData);
+
+                auth(login, password, (err, result) => {
+                    if (err) {
+                        response.writeHead(err.status);
+                        response.end(err.serialize());
+                        return;
+                    }
+
+                    response.writeHead(200, {'Authorization': `Bearer ${result.token}`});
+                    response.end(result.user.serialize());
+                });
+            });
+
+            return true;
+        }
+    },
 ];
 
 const router = (request, response) => {
     const hasMatch = routes.some((route) => {
-        setGeneralHeaders(response)
+        setGeneralHeaders(response);
         return route(request, response);
     })
     if (!hasMatch) {
