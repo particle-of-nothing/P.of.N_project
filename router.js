@@ -8,13 +8,9 @@ const { verifyToken, generateToken } = require("./tools/jwt");
 const { readBody } = require("./tools/read-body");
 
 const setGeneralHeaders = (response) => {
-    response.writeHead(
-        200,
-        {
-            "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
-            "Access-Control-Allow-Origin": "*"
-        }
-    );
+    response.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    response.setHeader("Access-Control-Allow-Origin", "*");
+    response.setHeader("Access-Control-Expose-Headers", "authorization");
 };
 
 const authRequest = (request, response, callback) => {
