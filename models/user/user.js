@@ -1,5 +1,5 @@
 class User {
-    constructor(id, login, password, role) {
+    constructor(id, login, password, role, token) {
         
         if (!id || !login || !role || !password) {
             throw new Error('Invalid user properties');
@@ -9,6 +9,7 @@ class User {
         this.login = login;
         this.password = password;
         this.role = role;
+        this.token = token;
     }
 
     serialize() {

@@ -64,6 +64,14 @@ const createUserQuery = (login, password, role) => {
 `
 }
 
+const updateUserTokenQuery = (id, token) => {
+    return `
+        UPDATE users
+        SET token = '${token}'
+        WHERE id_user = ${id}
+    `
+}
+
 const createProfileQuery = (userId) => {
     return `
         INSERT INTO profiles (id_user)
@@ -73,7 +81,7 @@ const createProfileQuery = (userId) => {
 
 const getUserByIdQuery = (id) => {
     return `
-        SELECT id_user, login, role, password
+        SELECT id_user, login, role, password, token
         FROM users
         WHERE id_user = ${id}
 `
@@ -81,7 +89,7 @@ const getUserByIdQuery = (id) => {
 
 const getUserByLoginQuery = (login) => {
     return `
-        SELECT id_user, login, role, password
+        SELECT id_user, login, role, password, token
         FROM users
         WHERE login = '${login}'
 `
@@ -177,4 +185,5 @@ module.exports = {
     findProductInPacketQuery,
     updateProductQuantityInPacketQuery,
     deleteProductFromPacketQuery,
+    updateUserTokenQuery,
 }

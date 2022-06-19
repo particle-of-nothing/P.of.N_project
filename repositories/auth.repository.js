@@ -1,9 +1,9 @@
 const { ERROR_CODES, DEFAULT_SIGN_UP_ROLE } = require("../consts");
 const connection = require("../db/connection");
-const { createUserQuery, getUserByLoginQuery, getUserByIdQuery, createProfileQuery } = require("../db/queries");
+const { createUserQuery, getUserByLoginQuery, getUserByIdQuery, createProfileQuery, updateUserTokenQuery } = require("../db/queries");
 const { ErrorDTO } = require("../models/error-dto/error-dto");
 const { User } = require("../models/user/user");
-const { generateToken } = require("../tools/jwt");
+const { generateToken, verifyToken } = require("../tools/jwt");
 const { encriptPassword, comparePasswords } = require("../tools/password-encripting");
 
 const getUserByLogin = (login, callback) => {
@@ -27,7 +27,8 @@ const getUserByLogin = (login, callback) => {
                     users[0].id_user,
                     users[0].login,
                     users[0].password,
-                    users[0].role
+                    users[0].role,
+                    users[0].token
                 )
             );
         }
@@ -56,8 +57,55 @@ const getUserById = (id, callback) => {
                     users[0].login,
                     users[0].password,
                     users[0].role,
+                    users[0].token,
                 )
             );
+        }
+    );
+}
+
+const checkToken = (token, callback) => {
+    verifyToken(token, (err, user) => {
+        if (err) {
+            callback(err);
+            return;
+        }
+        
+        getUserById(user.id, (err, user) => {
+            if (err) {
+                callback(err);
+                return;
+            }
+
+            if (user.token !== token) {
+                callback(new ErrorDTO(403, ERROR_CODES.INVALID_TOKEN_ERROR));
+                return;
+            }
+
+            callback(null, user);
+        });
+
+    })
+}
+
+const updateUserToken = (id, token, callback) => {
+    connection.query(
+        updateUserTokenQuery(id, token),
+        (error) => {
+            if (error) {
+                console.error(error);
+                callback(new ErrorDTO(500, ERROR_CODES.DATABASE_ERROR));
+                return;
+            };
+
+            getUserById(id, (err, user) => {
+                if (err) {
+                    callback(err);
+                    return;
+                }
+
+                callback(null, user);
+            });
         }
     );
 }
@@ -88,7 +136,7 @@ const createUser = (signUpData, callback) => {
 
                         connection.query(
                             createProfileQuery(result.insertId),
-                            (error, result) => {
+                            (error) => {
                                 if (error) {
                                     console.error(error);
                                     callback(new ErrorDTO(500, ERROR_CODES.UNKNOWN_ERROR));
@@ -103,7 +151,22 @@ const createUser = (signUpData, callback) => {
                                 return;
                             }
 
-                            callback(null, user);
+                            generateToken(user, (err, token) => {
+                                if (err) {
+                                    callback(err);
+                                    return;
+                                }
+                                
+                                updateUserToken(user.id, token, (err, user) => {
+                                    if (err) {
+                                        callback(err);
+                                        return;
+                                    }
+                                    
+                                    callback(null, user);
+                                });
+                            });
+
                         });
 
                     }
@@ -125,24 +188,14 @@ const signUp = (login, password, callback) => {
             return;
         }
 
-        generateToken(
-            user.id,
-            (err, token) => {
-                if (err) {
-                    callback(err);
-                    return;
-                }
-
-                callback(null, { token, user });
-            },
-        );
+        callback(null, user);
     });
 }
 
 const auth = (login, password, callback) => {
     getUserByLogin(login, (err, user) => {
         if (err) {
-            callback(new ErrorDTO(501, ERROR_CODES.INCORRECT_LOGIN_OR_PASSWORD_ERROR));
+            callback(new ErrorDTO(403, ERROR_CODES.INCORRECT_LOGIN_OR_PASSWORD_ERROR));
             return;
         }
 
@@ -153,21 +206,11 @@ const auth = (login, password, callback) => {
             }
 
             if (!result) {
-                callback(new ErrorDTO(501, ERROR_CODES.INCORRECT_LOGIN_OR_PASSWORD_ERROR));
+                callback(new ErrorDTO(403, ERROR_CODES.INCORRECT_LOGIN_OR_PASSWORD_ERROR));
                 return;
             }
 
-            generateToken(
-                user.id,
-                (err, token) => {
-                    if (err) {
-                        callback(err);
-                        return;
-                    }
-
-                    callback(null, { token, user });
-                },
-            );
+            callback(null, user);
         });
     })
 }
@@ -178,4 +221,6 @@ module.exports = {
     getUserById,
     signUp,
     auth,
+    updateUserToken,
+    checkToken,
 }

@@ -2,9 +2,9 @@ const jwt = require("jsonwebtoken");
 const { PRIVATE_KEY, ERROR_CODES } = require("../consts");
 const { ErrorDTO } = require("../models/error-dto/error-dto");
 
-const generateToken = (userId, callback) => {
+const generateToken = (user, callback) => {
     jwt.sign(
-        { id: userId },
+        user.serialize(),
         PRIVATE_KEY,
         (err, token) => {
             if (err) {
