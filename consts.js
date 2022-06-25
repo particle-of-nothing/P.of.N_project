@@ -9,7 +9,7 @@ const PROTOCOL = 'http://';
 
 const DEFAULT_SIGN_UP_ROLE = 1;
 
-const ENCRIPTION_SALT_ROUNDS = 10;
+const ENCRIPTION_SALT = fs.readFileSync(path.resolve(__dirname, 'salt.txt'), 'utf8');;
 const PRIVATE_KEY = fs.readFileSync(path.resolve(__dirname, 'secret.txt'), 'utf8');
 
 const ERROR_CODES = {
@@ -32,7 +32,7 @@ module.exports = {
     HOST,
     PORT,
     PROTOCOL,
-    ENCRIPTION_SALT_ROUNDS,
+    ENCRIPTION_SALT,
     ERROR_CODES,
     DEFAULT_SIGN_UP_ROLE,
     PRIVATE_KEY,

@@ -123,7 +123,7 @@ const routes = [
         }
     },
     (request, response) => {
-        if (request.url === "/auth" && request.method === "POST") {
+        if (request.url === "/sign-in" && request.method === "POST") {
             readBody(request, authData => {
                 const { login, password } = JSON.parse(authData);
 

@@ -1,10 +1,10 @@
 const bcrypt = require('bcrypt');
 
-const { ENCRIPTION_SALT_ROUNDS, ERROR_CODES } = require("../consts");
+const { ENCRIPTION_SALT, ERROR_CODES } = require("../consts");
 const { ErrorDTO } = require("../models/error-dto/error-dto");
 
 const encriptPassword = (password, callback) => {
-    bcrypt.hash(password, ENCRIPTION_SALT_ROUNDS, (err, hash) => {
+    bcrypt.hash(password, ENCRIPTION_SALT, (err, hash) => {
         if (err) {
             console.error(err);
             callback(new ErrorDTO(500, ERROR_CODES.UNKNOWN_ERROR));
