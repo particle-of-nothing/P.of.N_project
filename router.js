@@ -2,10 +2,10 @@ const { SEARCH_QUERY_PARAM_KEY, PROTOCOL, HOST, PORT, ERROR_CODES } = require(".
 const { ErrorDTO } = require("./models/error-dto/error-dto");
 const { signUp, auth, updateUserToken, checkToken } = require("./repositories/auth.repository");
 const { getCategories, getCategoriesByType } = require("./repositories/categories.repository");
-const { createPacket, getPacketById, getPackets, renamePacket, addProductToPacket, deleteProductFormPacket } = require("./repositories/packet.repository");
-const { getProducts, getProductById, getProductsByCategoryId } = require("./repositories/products.repository");
+const { createPacket, getPacketById, getPackets, renamePacket, addProductToPacket, deleteProductFormPacket, getPacketsByUserId } = require("./repositories/packet.repository");
+const { getProductById, getProductsByCategoryId, getProductsByPacketId } = require("./repositories/products.repository");
 const { search } = require("./repositories/search.repository");
-const { verifyToken, generateToken } = require("./tools/jwt");
+const { generateToken } = require("./tools/jwt");
 const { readBody } = require("./tools/read-body");
 
 const setGeneralHeaders = (response) => {
@@ -39,7 +39,7 @@ const checkAuth = (request, response, callback) => {
                 response.end(err.serialize());
                 return;
             }
-            
+
             updateUserToken(user.id, newToken, (err, user) => {
                 if (err) {
                     response.writeHead(err.status);
@@ -48,7 +48,7 @@ const checkAuth = (request, response, callback) => {
                 }
 
                 response.writeHead(200, { 'authorization': `Bearer ${newToken}` });
-    
+
                 callback(null, user);
             });
 
@@ -144,7 +144,7 @@ const routes = [
     },
     (request, response) => {
         if (request.url === "/refresh" && request.method === "GET") {
-            
+
             checkAuth(request, response, (err, user) => {
                 if (err) {
                     response.writeHead(err.status);
@@ -181,6 +181,47 @@ const routes = [
                 }
 
                 response.end(JSON.stringify(packets))
+            });
+            return true;
+        }
+    },
+    (request, response) => {
+        if (request.url === '/packets' && request.method === 'GET') {
+            checkAuth(request, response, (err, user) => {
+                if (err) {
+                    response.writeHead(err.status);
+                    response.end(err.serialize());
+                    return;
+                }
+                getPacketsByUserId(user.id, (err, packets) => {
+                    if (err) {
+                        response.writeHead(err.status);
+                        response.end(err.serialize());
+                        return;
+                    }
+                    response.end(JSON.stringify(packets))
+                })
+            });
+            return true;
+        }
+    },
+    (request, response) => {
+        const match = request.url.match(/^\/packets\/(\d+)\/products$/i);
+        if (match != null && match[1] && request.method === 'GET') {
+            checkAuth(request, response, (err, user) => {
+                if (err) {
+                    response.writeHead(err.status);
+                    response.end(err.serialize());
+                    return;
+                }
+                getProductsByPacketId(match[1], (err, products) => {
+                    if (err) {
+                        response.writeHead(err.status);
+                        response.end(err.serialize());
+                        return;
+                    }
+                    response.end(JSON.stringify(products))
+                });
             });
             return true;
         }
@@ -274,7 +315,7 @@ const routes = [
 ];
 
 const router = (request, response) => {
-    const hasMatch = routes.some((route) => {
+    const hasMatch = routes.some(route => {
         setGeneralHeaders(response);
         return route(request, response);
     })

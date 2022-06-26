@@ -110,6 +110,14 @@ const getPacketByIdQuery = (id) => {
 `
 }
 
+const getPacketsByUserIdQuery = (id) => {
+    return `
+        SELECT *
+        FROM packets
+        WHERE packets.id_user = ${id}
+`
+}
+
 const createPacketQuery = (userId) => {
     return `
         INSERT INTO packets (id_user)
@@ -178,6 +186,7 @@ module.exports = {
     createProfileQuery,
     getProductsByPacketIdQuery,
     getPacketByIdQuery,
+    getPacketsByUserIdQuery,
     createPacketQuery,
     getPacketsQuery,
     renamePacketQuery,

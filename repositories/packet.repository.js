@@ -1,6 +1,6 @@
 const { ERROR_CODES } = require("../consts");
 const connection = require("../db/connection")
-const { getPacketByIdQuery, createPacketQuery, getPacketsQuery, renamePacketQuery, findProductInPacketQuery, updateProductQuantityInPacketQuery, addProductToPacketQuery, deleteProductFromPacketQuery } = require("../db/queries");
+const { getPacketByIdQuery, createPacketQuery, getPacketsQuery, renamePacketQuery, findProductInPacketQuery, updateProductQuantityInPacketQuery, addProductToPacketQuery, deleteProductFromPacketQuery, getPacketsByUserIdQuery } = require("../db/queries");
 const { ErrorDTO } = require("../models/error-dto/error-dto");
 const { Packet } = require("../models/packet/packet");
 const { getProductsByPacketId } = require("./products.repository");
@@ -45,6 +45,21 @@ const getPacketById = (id, callback) => {
 const getPackets = (callback) => {
     connection.query(
         getPacketsQuery(),
+        (error, packets) => {
+            if (error) {
+                console.error(error);
+                callback(new ErrorDTO(500, ERROR_CODES.UNKNOWN_ERROR));
+                return;
+            }
+
+            callback(null, packets);
+        }
+    );
+}
+
+const getPacketsByUserId = (userId, callback) => {
+    connection.query(
+        getPacketsByUserIdQuery(userId),
         (error, packets) => {
             if (error) {
                 console.error(error);
@@ -229,6 +244,7 @@ module.exports = {
     getPacketById,
     createPacket,
     getPackets,
+    getPacketsByUserId,
     renamePacket,
     addProductToPacket,
     deleteProductFormPacket,
